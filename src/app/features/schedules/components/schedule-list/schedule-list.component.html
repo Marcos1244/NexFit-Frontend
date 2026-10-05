@@ -1,0 +1,37 @@
+<app-module-layout moduleName="Gestión de Horarios" [menuElements]="menuElements">
+
+  <app-dynamic-table
+    [columns]="columns"
+    [data]="schedules()"
+    [totalElements]="totalElements()"
+    [pageSize]="pageSize()"
+    [pageIndex]="pageNumber()"
+    [actions]="actions"
+    (onPaginate)="handlePagination($event)"
+    (onFilter)="handleFilters($event)"
+    (onAction)="handleAction($event)"
+    [filters]="filters">
+
+    <ng-template #customCell let-row let-col="col">
+      @if (col.key === 'activeClientCount') {
+        <div class="flex flex-col gap-1 min-w-[120px]">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-semibold text-slate-700">
+              {{ row.activeClientCount || 0 }} / 35
+            </span>
+            <span class="text-slate-400">
+              {{ ((row.activeClientCount || 0) / 35 * 100).toFixed(0) }}%
+            </span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div 
+              [class]="getClientOccupancyClass(row.activeClientCount || 0) + ' h-full rounded-full transition-all duration-500'"
+              [style.width.%]="(row.activeClientCount || 0) / 35 * 100">
+            </div>
+          </div>
+        </div>
+      }
+    </ng-template>
+  </app-dynamic-table>
+
+</app-module-layout>

@@ -1,0 +1,126 @@
+<app-module-layout moduleName="Gestión de Entrenadores" [menuElements]="menuElements">
+  <div class="max-w-3xl mx-auto">
+    
+    <div class="bg-white/80 backdrop-blur-xl border border-slate-200/60 shadow-2xl shadow-slate-200/40 rounded-3xl overflow-hidden transition-all duration-300">
+      
+      <header class="px-8 pt-8 pb-6 bg-gradient-to-r from-slate-50/80 via-white to-transparent border-b border-slate-100">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-interactivo/10 shadow-inner">
+            <mat-icon class="!text-interactivo !text-2xl">schedule</mat-icon>
+          </div>
+          <div>
+            <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800">
+              Horarios del Entrenador
+            </h2>
+            <p class="mt-1 text-sm text-slate-500 font-medium">
+              @if (coach) {
+                Asigne o elimine horarios para {{ coach.name }} {{ coach.lastname }}.
+              } @else {
+                Asigne o elimine horarios para el entrenador seleccionado.
+              }
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div class="p-8 space-y-6">
+        
+        @if (isLoading()) {
+          <div class="flex flex-col items-center justify-center py-12 gap-4">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p class="text-sm text-slate-500">Cargando información...</p>
+          </div>
+        } @else {
+          
+          <form [formGroup]="scheduleForm" class="space-y-4">
+            <div formArrayName="schedules" class="space-y-4">
+              
+              @for (control of schedulesArray.controls; track control; let i = $index) {
+                <div class="flex items-center gap-3">
+                  
+                  <mat-form-field appearance="outline" 
+                                  class="flex-1 !rounded-xl transition-all duration-300 
+                                         hover:!shadow-md hover:!shadow-slate-200/50 
+                                         focus-within:!shadow-lg focus-within:!shadow-interactivo/15">
+                    <mat-label class="!font-medium !text-slate-600">Horario {{ i + 1 }}</mat-label>
+                    
+                    <mat-select [formControlName]="i"
+                               (selectionChange)="onScheduleSelected(i, $event.value)"
+                               class="!font-medium">
+                      
+                      <mat-option [value]="null">
+                        <span class="text-slate-400">Sin horario asignado</span>
+                      </mat-option>
+                      
+                      @for (schedule of getAvailableSchedulesForIndex(i); track schedule.scheduleId) {
+                        <mat-option [value]="schedule.scheduleId" class="!font-medium">
+                          <div class="flex items-center justify-between w-full py-0.5">
+                            <span>{{ formatSchedule(schedule) }}</span>
+                            <span class="text-xs text-slate-400 ml-4">
+                              ({{ schedule.activeClientCount }} clientes)
+                            </span>
+                          </div>
+                        </mat-option>
+                      } @empty {
+                        <mat-option disabled>
+                          <span class="text-slate-400">No hay horarios disponibles.</span>
+                        </mat-option>
+                      }
+                    </mat-select>
+                    
+                    <mat-icon matSuffix class="text-slate-400">event</mat-icon>
+                  </mat-form-field>
+
+                  <div class="flex gap-2 flex-shrink-0 min-w-[104px]">
+                    
+                    @if (control.value) {
+                      <button mat-fab
+                              type="button"
+                              (click)="removeScheduleControl(i)"
+                              [disabled]="isSaving()"
+                              class="!bg-red-500 !text-white shadow-lg shadow-red-500/30 
+                                     hover:shadow-xl hover:-translate-y-0.5 
+                                     transition-all duration-200 !w-12 !h-12">
+                        <mat-icon>remove</mat-icon>
+                      </button>
+                    }
+
+                    @if (isLastControl(i) && canAddNewSchedule()) {
+                      <button mat-fab
+                              type="button"
+                              (click)="addScheduleControl()"
+                              [disabled]="isSaving()"
+                              class="!bg-interactivo !text-white shadow-lg shadow-interactivo/30 
+                                     hover:shadow-xl hover:-translate-y-0.5 
+                                     transition-all duration-200 !w-12 !h-12">
+                        <mat-icon>add</mat-icon>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </form>
+
+          @if (allSchedules.length === 0) {
+            <div class="text-center py-8 text-slate-400">
+              <mat-icon class="!text-4xl mb-2">event_busy</mat-icon>
+              <p class="text-sm">No hay horarios activos disponibles en el sistema.</p>
+            </div>
+          }
+        }
+
+        <div class="flex justify-end pt-6 border-t border-slate-100">
+          <button mat-stroked-button
+                  type="button"
+                  (click)="handleCancel()"
+                  class="!rounded-xl !px-6 !py-2 !border-slate-200 !text-slate-600 !font-semibold 
+                         hover:!bg-slate-50 hover:!border-slate-300 transition-all duration-200">
+            Volver al Listado
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</app-module-layout>

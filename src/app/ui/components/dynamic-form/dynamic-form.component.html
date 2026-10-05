@@ -1,0 +1,140 @@
+<div class="bg-white/80 backdrop-blur-xl border border-slate-200/60 shadow-2xl shadow-slate-200/40 rounded-3xl overflow-hidden transition-all duration-300">
+  
+  <header class="px-8 pt-8 pb-6 bg-gradient-to-r from-slate-50/80 via-white to-transparent border-b border-slate-100">
+    <div class="flex items-center gap-4">
+      <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-interactivo/10 shadow-inner">
+        <mat-icon class="!text-interactivo !text-2xl">edit_note</mat-icon>
+      </div>
+      <div>
+        <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800">
+          {{ title() }}
+        </h2>
+        <p class="mt-1 text-sm text-slate-500 font-medium">
+          Complete la siguiente información para registrar los datos.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <form [formGroup]="formGroup()" (ngSubmit)="onSubmit.emit()" class="p-8 space-y-8">
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+      @for (field of fields(); track field.key) {
+        
+        <div class="flex flex-col">
+          <mat-form-field appearance="outline" 
+                          class="w-full !rounded-xl transition-all duration-300 
+                                 hover:!shadow-md hover:!shadow-slate-200/50 
+                                 focus-within:!shadow-lg focus-within:!shadow-interactivo/15">
+            <mat-label class="!font-medium !text-slate-600">{{ field.label }}</mat-label>
+            
+            @if (field.icon) {
+              <div matPrefix class="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 mr-3 transition-colors focus-within:bg-interactivo/10">
+                <mat-icon class="!text-slate-500 !text-xl !w-5 !h-5 transition-colors focus-within:!text-interactivo">{{ field.icon }}</mat-icon>
+              </div>
+            }
+
+            @if (field.type === FieldColumnTypeEnum.Select && field.isDynamic) {
+              <mat-select [formControlName]="field.key" 
+                          [compareWith]="compareOptions"
+                          class="!font-medium">
+                @for (option of field.options; track option.value) {
+                  <mat-option [value]="option" [disabled]="option.isDisabled" class="!font-medium">
+                    <div class="flex items-center justify-between py-1 px-2 w-full">
+                      <div class="flex flex-col">
+                        <span class="font-medium text-sm">{{ option.label }}</span>
+                        @if (option.sublabel) {
+                          <span class="text-xs text-slate-500">{{ option.sublabel }}</span>
+                        }
+                      </div>
+                      
+                      @if (option.statusColor && option.statusText) {
+                        <div class="flex items-center gap-2 ml-4">
+                          <span class="text-xs font-semibold" 
+                                [ngClass]="{
+                                  'text-green-600': option.statusColor === 'green',
+                                  'text-amber-600': option.statusColor === 'yellow',
+                                  'text-red-600': option.statusColor === 'red',
+                                  'text-slate-500': option.statusColor === 'gray'
+                                }">
+                            {{ option.statusText }}
+                          </span>
+                          <div class="w-3 h-3 rounded-full" [class]="getStatusColorClass(option.statusColor)"></div>
+                        </div>
+                      }
+                    </div>
+                  </mat-option>
+                } @empty {
+                  <mat-option disabled>
+                    <span class="text-slate-400">No hay opciones disponibles.</span>
+                  </mat-option>
+                }
+              </mat-select>
+            }
+
+            <!-- SELECT ESTÁTICO (Original) -->
+            @else if (field.type === FieldColumnTypeEnum.Select) {
+              <mat-select [formControlName]="field.key" class="!font-medium">
+                @for (option of field.options; track option.value) {
+                  <mat-option [value]="option.value" class="!font-medium">{{ option.label }}</mat-option>
+                }
+              </mat-select>
+            }
+
+            <!-- INPUT ESTÁNDAR -->
+            @else {
+              <input matInput 
+                     [type]="field.type!" 
+                     [formControlName]="field.key"
+                     [placeholder]="field.placeholder || ''"
+                     class="!text-slate-800 !font-medium">
+            }
+
+            @if (field.requirements?.length) {
+              <mat-hint align="start" class="!text-xs !text-slate-400 !font-normal pt-1">
+                @for (req of field.requirements; track $index; let last = $last) {
+                  {{ req }}{{ !last ? ' • ' : '' }}
+                }
+              </mat-hint>
+            }
+
+            @if (shouldShowError(field.key)) {
+              <mat-error class="!text-xs !font-medium">
+                {{ getErrorMessage(field) }}
+              </mat-error>
+            }
+
+            @if (getGroupErrorMessage(field)) {
+              <mat-error class="!text-xs !font-medium">
+                {{ getGroupErrorMessage(field) }}
+              </mat-error>
+            }
+          </mat-form-field>
+        </div>
+      }
+    </div>
+
+    <div class="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-8 border-t border-slate-100">
+      <button mat-stroked-button 
+              type="button" 
+              (click)="onCancel.emit()"
+              class="!rounded-xl !px-6 !py-2 !border-slate-200 !text-slate-600 !font-semibold 
+                     hover:!bg-slate-50 hover:!border-slate-300 hover:!text-slate-800 
+                     active:scale-95 transition-all duration-200">
+        Cancelar
+      </button>
+      <button mat-flat-button 
+              type="submit"
+              [disabled]="formGroup().invalid"
+              class="!rounded-xl !px-8 !py-2 !bg-interactivo !text-white !font-bold !text-base
+                     shadow-lg shadow-interactivo/30 
+                     hover:shadow-xl hover:shadow-interactivo/40 hover:-translate-y-0.5 
+                     active:translate-y-0 active:shadow-md
+                     disabled:!bg-slate-200 disabled:!text-slate-400 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed
+                     transition-all duration-200">
+        Guardar Cambios
+      </button>
+    </div>
+
+  </form>
+</div>

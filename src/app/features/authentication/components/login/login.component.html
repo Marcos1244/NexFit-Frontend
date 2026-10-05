@@ -1,0 +1,74 @@
+<div class="flex min-h-screen bg-fondo-claro">
+  <div class="hidden lg:flex lg:w-1/2 bg-institucional flex-col justify-center items-center p-12 text-white">
+    <div class="w-32 h-32 bg-acento-amarillo rounded-full flex items-center justify-center mb-8 shadow-lg shadow-black/20 overflow-hidden">
+      <img src="assets/images/Logo.jpeg"
+           alt="Logo Oficial Movimiento por la Paz y la Vida"
+           class="min-w-full min-h-full object-cover">
+    </div>
+
+    <h1 class="text-5xl font-bold mb-4 tracking-wide">Base Misión de Paz HCF</h1>
+
+    <p class="text-xl text-acento-cian font-light text-center max-w-md">
+      Gimnasio de Musculación y acondicionamiento.
+    </p>
+
+  </div>
+
+  <div class="w-full lg:w-1/2 flex justify-center items-center p-8 bg-white shadow-2xl z-10">
+    <div class="w-full max-w-md space-y-8">
+
+      <div class="text-center">
+        <h2 class="text-3xl font-extrabold text-institucional">Bienvenido a NexFit</h2>
+        <p class="mt-2 text-pizarra">Ingresa tus credenciales para continuar</p>
+      </div>
+
+      <form [formGroup]="formGroup" (ngSubmit)="onSubmit()" class="flex flex-col gap-4 mt-8">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Cédula</mat-label>
+          <input formControlName="ci" matInput placeholder="ej. 32104351">
+          <mat-icon matPrefix class="text-pizarra mr-2">person</mat-icon>
+
+          @if (formGroup.get('ci')?.touched && formGroup.get('ci')?.hasError('required')) {
+            <mat-error>La cédula es requerida.</mat-error>
+          }
+
+          @if (
+            formGroup.get("ci")?.touched
+            && (formGroup.get("ci")?.hasError("minlength")
+              || formGroup.get("ci")?.hasError("maxlength"))
+            ) {
+            <mat-error>La cédula debe ser equivalente a 8 dígitos.</mat-error>
+          }
+
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Contraseña</mat-label>
+          <input formControlName="password" matInput type="password" placeholder="••••••••">
+          <mat-icon matPrefix class="text-pizarra mr-2">lock</mat-icon>
+
+          @if (formGroup.get("password")?.hasError("required") && formGroup.get("password")?.touched) {
+            <mat-error>La contraseña es requerida.</mat-error>
+          }
+
+          @if (
+            formGroup.get("password")?.touched
+            && (formGroup.get("password")?.hasError("minlength")
+              || formGroup.get("password")?.hasError("maxlength"))
+            ) {
+            <mat-error>La contraseña debe tener entre 6 y 20 caracteres.</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          [disabled]="formGroup.invalid"
+          mat-flat-button
+          class="bg-interactivo! text-white! py-6! text-lg! rounded-lg! hover:bg-institucional! transition-colors w-full mt-4">
+          Iniciar Sesión
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+</div>

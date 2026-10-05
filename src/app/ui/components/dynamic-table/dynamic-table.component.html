@@ -1,0 +1,151 @@
+<div class="flex overflow-x-auto flex-col gap-6">
+
+  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+    <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+      <mat-icon class="text-institucional">filter_alt</mat-icon>
+      <h3 class="text-sm font-bold text-institucional uppercase tracking-wider">Filtros de Búsqueda</h3>
+    </div>
+
+    <form [formGroup]="formGroup" (ngSubmit)="applyFilter()">
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        @for (filter of filters(); track filter.key) {
+
+          @if (filter.type === 'date') {
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>{{ filter.label }}</mat-label>
+              <input matInput 
+                    [matDatepicker]="picker"
+                    [formControlName]="filter.key"
+                    [min]="getMinDate(filter)"
+                    [max]="getMaxDate(filter)"
+                    readonly>
+              <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+
+              @if (formGroup.get(filter.key)?.hasError('dateRangeMin')) {
+                <mat-error>La fecha no puede ser anterior al inicio del rango.</mat-error>
+              }
+              @if (formGroup.get(filter.key)?.hasError('dateRangeMax')) {
+                <mat-error>La fecha no puede ser posterior al fin del rango.</mat-error>
+              }
+            </mat-form-field>
+          }
+
+          @if (filter.type === 'time') {
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>{{ filter.label }}</mat-label>
+              <input matInput 
+                    type="time"
+                    [formControlName]="filter.key">
+              <mat-icon matSuffix class="text-slate-400">schedule</mat-icon>
+
+              @if (formGroup.get(filter.key)?.hasError('timeRangeMin')) {
+                <mat-error>La hora no puede ser anterior a la de inicio.</mat-error>
+              }
+              @if (formGroup.get(filter.key)?.hasError('timeRangeMax')) {
+                <mat-error>La hora no puede ser posterior a la de salida.</mat-error>
+              }
+            </mat-form-field>
+          }
+
+          @if (filter.type === 'select') {
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>{{ filter.label }}</mat-label>
+              <mat-select [formControlName]="filter.key">
+                <mat-option [value]="null">Todos</mat-option>
+                @for (opt of filter.options; track opt.value) {
+                  <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+
+
+          @if (filter.type !== 'select' && filter.type !== 'date' && filter.type !== 'time') {
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>{{ filter.label }}</mat-label>
+              <input matInput 
+                    [type]="filter.type || 'text'" 
+                    [formControlName]="filter.key" >
+            </mat-form-field>
+          }
+
+        }
+      </div>
+
+      <div class="flex justify-end gap-3 mt-4">
+        <button type="button" mat-stroked-button class="text-pizarra" (click)="clearFilter()">
+          Limpiar
+        </button>
+        <button type="submit" 
+                mat-flat-button 
+                class="!bg-interactivo !text-white hover:!bg-institucional transition-colors"
+                [disabled]="formGroup.invalid">
+          Buscar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-sm bg-white flex flex-col">
+    <table mat-table [dataSource]="data()" class="w-full">
+
+      @for (col of columns(); track col.key) {
+        <ng-container [matColumnDef]="col.key">
+          <th mat-header-cell *matHeaderCellDef class="!text-institucional !font-bold bg-slate-50">
+            {{ col.label }}
+          </th>
+          <td mat-cell *matCellDef="let element" class="text-slate-600">
+            @if (col.customRender) {
+              <ng-container *ngTemplateOutlet="customCellTemplate; context: { $implicit: element, col: col }">
+              </ng-container>
+            } @else if (col.type === FieldColumnTypeEnum.Date) {
+              {{ getNestedValue(element, col.key) | date:'yyyy/MM/dd' }}
+            } @else if (col.type === FieldColumnTypeEnum.Time) {
+              {{ getNestedValue(element, col.key) | date:'hh:mm' }}
+            } @else {
+              {{ getNestedValue(element, col.key) }}
+            }
+          </td>
+        </ng-container>
+      }
+
+      @if (actions()?.length) {
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="!text-institucional !font-bold text-right bg-slate-50 px-4">
+            Acciones
+          </th>
+          <td mat-cell *matCellDef="let element" class="text-right px-4">
+            @for (action of actions(); track action.name) {
+              <button mat-icon-button
+                      [class]="action.colorClass + ' hover:bg-slate-100 disabled:!text-slate-400 disabled:!opacity-50'"
+                      [matTooltip]="action.tooltip"
+                      [disabled]="action.disabledIf ? action.disabledIf(element) : false"
+                      (click)="onAction.emit({action: action.name, row: element})">
+                <mat-icon>{{ action.icon }}</mat-icon>
+              </button>
+            }
+          </td>
+        </ng-container>
+      }
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-slate-50 transition-colors"></tr>
+
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell text-center py-8 text-pizarra" [attr.colspan]="displayedColumns.length">
+          No se encontraron registros para los filtros aplicados.
+        </td>
+      </tr>
+    </table>
+
+    <mat-paginator
+      class="border-t border-slate-200 bg-slate-50 rounded-b-xl"
+      [length]="totalElements()"
+      [pageSize]="pageSize()"
+      [pageIndex]="pageIndex()"
+      [pageSizeOptions]="[5, 10, 25, 50]"
+      (page)="onPaginate.emit($event)">
+    </mat-paginator>
+  </div>
+</div>

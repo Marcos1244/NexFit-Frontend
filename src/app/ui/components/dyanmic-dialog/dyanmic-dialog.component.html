@@ -1,0 +1,32 @@
+<div class="p-8">
+
+  <h2 mat-dialog-title class="!text-2xl !font-bold !p-0 mb-4 text-institucional flex items-center gap-3">
+    @if (data.theme === DialogThemeEnum.Danger) {
+      <mat-icon class="text-red-500 scale-125">warning</mat-icon>
+    } @else if (data.theme === DialogThemeEnum.Success) {
+      <mat-icon class="text-green-500 scale-125">check_circle</mat-icon>
+    } @else if (data.theme === DialogThemeEnum.Info) {
+      <mat-icon class="text-interactivo scale-125">info</mat-icon>
+    }
+    {{ data.title }}
+  </h2>
+
+  <mat-dialog-content class="!p-0 !text-slate-600 mb-8 min-w-[300px] max-w-[400px]">
+    <p class="text-lg leading-relaxed">{{ data.message }}</p>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="!p-0 flex justify-end gap-4">
+
+    @if (data.type === DialogTypeEnum.Confirm) {
+      <button mat-stroked-button (click)="onCancel()" class="!text-pizarra hover:!bg-slate-50">
+        {{ data.cancelText || 'Cancelar' }}
+      </button>
+    }
+
+    <button mat-flat-button (click)="onAccept()"
+            [class]="data.theme === DialogThemeEnum.Danger ? '!bg-red-600 !text-white hover:!bg-red-700' : '!bg-interactivo !text-white hover:!bg-institucional'">
+      {{ data.acceptText || 'Aceptar' }}
+    </button>
+
+  </mat-dialog-actions>
+</div>

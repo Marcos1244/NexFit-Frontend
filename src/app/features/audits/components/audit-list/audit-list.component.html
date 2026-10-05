@@ -1,0 +1,16 @@
+<app-module-layout moduleName="Registro de Auditoría" [menuElements]="menuElements">
+
+  <app-dynamic-table
+    [columns]="columns"
+    [data]="audits()"
+    [totalElements]="totalElements()"
+    [pageSize]="pageSize()"
+    [pageIndex]="pageNumber()"
+    [actions]="actions"
+    (onPaginate)="handlePagination($event)"
+    (onFilter)="handleFilters($event)"
+    (onAction)="handleAction($event)"
+    [filters]="filters">
+  </app-dynamic-table>
+
+</app-module-layout>

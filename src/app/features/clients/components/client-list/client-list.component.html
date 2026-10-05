@@ -1,0 +1,16 @@
+<app-module-layout moduleName="Gestión de Clientes" [menuElements]="menuElements">
+
+  <app-dynamic-table
+    [columns]="tableColumns"
+    [data]="clients()"
+    [totalElements]="totalElements()"
+    [pageSize]="pageSize()"
+    [pageIndex]="pageNumber()"
+    [actions]="tableActions"
+    (onPaginate)="handlePagination($event)"
+    (onFilter)="handleFilters($event)"
+    (onAction)="handleAction($event)"
+    [filters]="filters">
+  </app-dynamic-table>
+
+</app-module-layout>

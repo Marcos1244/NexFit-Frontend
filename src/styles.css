@@ -1,1 +1,18 @@
-/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+@theme {
+  --color-institucional: #1A2567;
+  --color-fondo-claro: #F8FAFC;
+
+  --color-pizarra: #64748B;
+
+  --color-acento-cian: #67E8F9;
+  --color-acento-amarillo: #FACC15;
+  --color-interactivo: #2A3B8C;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: var(--color-fondo-claro);
+}

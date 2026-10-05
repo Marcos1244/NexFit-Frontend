@@ -1,0 +1,13 @@
+<app-module-layout moduleName="Gestión de Clientes" [menuElements]="menuElements">
+
+  <div class="max-w-4xl mx-auto mt-4">
+    <app-dynamic-form
+      [title]="clientForm.value.personId ? 'Actualizar Cliente' : 'Crear Cliente'"
+      [fields]="clientFormFields"
+      [formGroup]="clientForm"
+      (onSubmit)="handleSave()"
+      (onCancel)="handleCancel()">
+    </app-dynamic-form>
+  </div>
+
+</app-module-layout>

@@ -1,0 +1,14 @@
+<app-module-layout moduleName="Gestión de Horarios" [menuElements]="menuElements">
+
+  <div class="max-w-4xl mx-auto mt-4">
+    <app-dynamic-form
+      [title]="scheduleForm.value.scheduleId ? 'Actualizar Horario' : 'Crear Horario'"
+      [fields]="formFields"
+      [formGroup]="scheduleForm"
+      (onSubmit)="handleSave()"
+      (onCancel)="handleCancel()">
+    </app-dynamic-form>
+  </div>
+
+
+</app-module-layout>

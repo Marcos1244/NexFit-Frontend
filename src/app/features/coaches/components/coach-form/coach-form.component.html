@@ -1,0 +1,13 @@
+<app-module-layout moduleName="Gestión de Entrenadores" [menuElements]="menuElements">
+
+  <div class="max-w-4xl mx-auto mt-4">
+    <app-dynamic-form
+      [title]="coachForm.value.personId ? 'Actualizar Entrenador' : 'Crear Entrenador'"
+      [fields]="coachFormFields"
+      [formGroup]="coachForm"
+      (onSubmit)="handleSave()"
+      (onCancel)="handleCancel()">
+    </app-dynamic-form>
+  </div>
+
+</app-module-layout>

@@ -1,0 +1,28 @@
+<div class="flex flex-col gap-6 h-full">
+
+  <div class="flex flex-col gap-4">
+
+    <h1 class="text-3xl font-extrabold text-institucional tracking-tight">
+      {{ moduleName() }}
+    </h1>
+
+    <nav class="flex gap-2 border-b border-slate-300 pb-px">
+      @for (item of menuElements(); track item.label) {
+        <a [routerLink]="item.route"
+           routerLinkActive="!border-interactivo !text-interactivo bg-interactivo/5"
+           class="px-4 py-2 text-sm font-medium text-pizarra border-b-2 border-transparent hover:text-institucional hover:bg-slate-100 transition-colors flex items-center gap-2 cursor-pointer">
+
+          @if (item.icon) {
+            <mat-icon class="scale-75">{{ item.icon }}</mat-icon>
+          }
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex-1">
+    <ng-content></ng-content>
+  </div>
+
+</div>
