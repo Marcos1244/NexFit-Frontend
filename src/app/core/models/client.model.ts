@@ -9,4 +9,6 @@ export default interface Client {
   phone: string;
   coach: Coach | null;
   schedule: Schedule | null;
+  status: boolean;
+  createdAt: string;
 }

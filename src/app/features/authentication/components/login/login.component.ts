@@ -10,6 +10,8 @@ import { Router } from '@angular/router';
 import TokenDto from '../../dto/token.dto';
 import MessageError from '../../../../core/dto/messageError.dto';
 import { form } from '@angular/forms/signals';
+import { NotificationService } from '../../../../ui/services/notification.service';
+import { DialogThemeEnum } from '../../../../ui/enums/DialogTheme.enum';
 
 @Component({
   imports: [
@@ -28,6 +30,7 @@ export class LoginComponent {
   private service: LoginService = inject(LoginService);
   private auth: AuthService = inject(AuthService);
   private router: Router = inject(Router);
+  private notification: NotificationService = inject(NotificationService);
 
   formGroup: FormGroup = this.formBuilder.group({
     ci: [
@@ -52,6 +55,12 @@ export class LoginComponent {
           this.auth.saveSession(response.token);
 
           this.router.navigateByUrl('/application/home');
+        },
+        error: (info: { error: MessageError }) => {
+          this.notification.alert({
+            message: info.error.message,
+            theme: DialogThemeEnum.Danger
+          });
         }
       });
     }

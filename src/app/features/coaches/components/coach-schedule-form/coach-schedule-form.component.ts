@@ -139,7 +139,6 @@ export class CoachScheduleFormComponent implements OnInit, OnDestroy {
     }
 
     if (schedules.length > 0) {
-      // Usar el scheduleId como valor, no el objeto completo
       schedules.forEach((schedule) => {
         this.schedulesArray.push(new FormControl<number | null>(schedule.scheduleId));
       });

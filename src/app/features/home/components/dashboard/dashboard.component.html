@@ -1,9 +1,213 @@
-<app-module-layout
-  moduleName="Inicio"
-  [menuElements]="menuElements">
 
-  <div>
-    Aquí va tu tabla de Angular Material...
+<app-module-layout moduleName="Inicio" [menuElements]="menuElements">
+  
+
+  <div class="flex items-center gap-3 mb-6">
+    <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-interactivo text-white shadow-lg">
+      <mat-icon class="!text-2xl">home</mat-icon>
+    </div>
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-800">Resumen</h1>
+      <p class="text-sm text-slate-500">Resumen general del estado del polideportivo</p>
+    </div>
   </div>
 
+  @if (isLoadingStats()) {
+    <div class="flex items-center justify-center py-20">
+      <mat-spinner diameter="48"></mat-spinner>
+    </div>
+  } @else if (stats(); as stats) {
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+
+      <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-slate-500">Clientes Activos</span>
+          <mat-icon class="!text-interactivo !text-xl">group</mat-icon>
+        </div>
+        <div class="text-3xl font-extrabold text-slate-800 mb-1">
+          {{ stats.activeClients | number }}
+        </div>
+        <div class="flex items-center gap-1 text-xs text-green-600 font-medium">
+          <mat-icon class="!text-sm !w-4 !h-4">person_add</mat-icon>
+          +{{ stats.newClientsToday }} registrados hoy
+        </div>
+      </div>
+
+
+      <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-slate-500">Entrenadores Activos</span>
+          <mat-icon class="!text-interactivo !text-xl">fitness_center</mat-icon>
+        </div>
+        <div class="text-3xl font-extrabold text-slate-800 mb-1">
+          {{ stats.activeCoaches | number }}
+        </div>
+        <div class="flex items-center gap-1 text-xs text-slate-500 font-medium">
+          <mat-icon class="!text-sm !w-4 !h-4">check_circle</mat-icon>
+          En servicio actualmente
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-slate-500">Aforo Actual</span>
+          <mat-icon class="!text-interactivo !text-xl">monitoring</mat-icon>
+        </div>
+        <div class="text-3xl font-extrabold text-slate-800 mb-1">
+          {{ stats.currentOccupancy }} / {{ stats.totalCapacity }}
+        </div>
+        <div class="text-xs text-slate-500 font-medium mb-2">
+          Capacidad al {{ getCapacityPercentage() }}%
+        </div>
+        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div class="h-full bg-interactivo rounded-full transition-all duration-500"
+               [style.width.%]="getCapacityPercentage()"></div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-slate-500">Clientes Inactivos</span>
+          <mat-icon class="!text-interactivo !text-xl">person_off</mat-icon>
+        </div>
+        <div class="text-3xl font-extrabold text-slate-800 mb-1">
+          {{ stats.inactiveClients | number }}
+        </div>
+        <div class="flex items-center gap-1 text-xs text-amber-600 font-medium">
+          <mat-icon class="!text-sm !w-4 !h-4">warning</mat-icon>
+          {{ stats.fullSchedules }} horarios llenos
+        </div>
+      </div>
+    </div>
+
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+
+      <div class="xl:col-span-2 bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h2 class="text-base font-bold text-slate-800">Nuevos Ingresos de Clientes</h2>
+
+          <div class="flex gap-1 bg-slate-100 rounded-lg p-1">
+            @for (option of periodOptions; track option.value) {
+              <button type="button"
+                      (click)="changePeriod(option.value)"
+                      class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200"
+                      [class.bg-interactivo]="selectedPeriod() === option.value"
+                      [class.text-white]="selectedPeriod() === option.value"
+                      [class.text-slate-600]="selectedPeriod() !== option.value"
+                      [class.hover:bg-slate-200]="selectedPeriod() !== option.value">
+                {{ option.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="relative h-72">
+          <canvas #clientsChart></canvas>
+
+          @if (isLoadingChart()) {
+            <div class="absolute inset-0 flex items-center justify-center bg-white/70 rounded-xl">
+              <mat-spinner diameter="36"></mat-spinner>
+            </div>
+          }
+        </div>
+
+        @if (clientsComparison(); as comparison) {
+          <div class="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
+            <div>
+              <span class="text-xs text-slate-500 font-medium">{{ comparison.periodLabel }}</span>
+              <div class="text-lg font-bold text-interactivo">
+                {{ comparison.currentTotal }} clientes
+              </div>
+            </div>
+            <div>
+              <span class="text-xs text-slate-500 font-medium">{{ comparison.comparisonLabel }}</span>
+              <div class="text-lg font-bold text-slate-400">
+                {{ comparison.previousTotal }} clientes
+              </div>
+            </div>
+            <div>
+              <span class="text-xs text-slate-500 font-medium">Variación</span>
+              <div class="text-lg font-bold"
+                  [class.text-green-600]="comparison.percentageChange >= 0"
+                  [class.text-red-600]="comparison.percentageChange < 0">
+                {{ comparison.percentageChange >= 0 ? '+' : '' }}{{ comparison.percentageChange | number:'1.0-1' }}%
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-bold text-slate-800">Horarios Críticos</h2>
+          <mat-icon class="!text-interactivo !text-xl">timer</mat-icon>
+        </div>
+
+        <div class="space-y-3">
+          @for (schedule of stats.criticalSchedules; track schedule.scheduleId) {
+            <div class="flex items-center gap-3 bg-slate-50 rounded-xl p-3 hover:bg-slate-100 transition-colors">
+              
+              <div class="relative w-14 h-14 flex-shrink-0">
+                <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="#e2e8f0"
+                    stroke-width="3"/>
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    [attr.stroke]="getOccupancyColor(schedule.occupancyPercentage)"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    [attr.stroke-dasharray]="schedule.occupancyPercentage + ', 100'"/>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <span class="text-xs font-bold"
+                        [style.color]="getOccupancyColor(schedule.occupancyPercentage)">
+                    {{ schedule.occupancyPercentage }}%
+                  </span>
+                </div>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold text-slate-700 truncate">
+                  {{ schedule.startTime | slice:0:5 }} - {{ schedule.endTime | slice:0:5 }}
+                </div>
+                <div class="text-xs text-slate-500">
+                  {{ schedule.activeClients }} de {{ stats.maxClientsPerSchedule }} clientes
+                </div>
+              </div>
+
+              <mat-icon class="!text-lg"
+                        [ngClass]="schedule.occupancyPercentage < 90 ? '!text-amber-500' : '!text-red-500'">
+                trending_up
+              </mat-icon>
+            </div>
+          } @empty {
+            <div class="text-center py-8 text-slate-400">
+              <mat-icon class="!text-4xl mb-2">check_circle</mat-icon>
+              <p class="text-sm">No hay horarios críticos actualmente.</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
 </app-module-layout>
+
+@if (pendingClientsCount() > 0) {
+  <button
+    type="button"
+    class="pending-clients-fab"
+    (click)="navigateToPendingClients()"
+    matTooltip="{{ pendingClientsCount() }} cliente(s) pendiente(s) de mensualidad"
+    matTooltipPosition="above"
+  >
+    <span class="fab-count">{{ pendingClientsCount() }}</span>
+    <mat-icon class="fab-icon">pending_actions</mat-icon>
+  </button>
+}

@@ -28,17 +28,69 @@
                                  focus-within:!shadow-lg focus-within:!shadow-interactivo/15">
             <mat-label class="!font-medium !text-slate-600">{{ field.label }}</mat-label>
             
+            <!-- Prefijo (correcto: un solo nodo raíz) -->
             @if (field.icon) {
               <div matPrefix class="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 mr-3 transition-colors focus-within:bg-interactivo/10">
                 <mat-icon class="!text-slate-500 !text-xl !w-5 !h-5 transition-colors focus-within:!text-interactivo">{{ field.icon }}</mat-icon>
               </div>
             }
 
-            @if (field.type === FieldColumnTypeEnum.Select && field.isDynamic) {
+            <!-- ============================================ -->
+            <!-- AUTOCOMPLETE (separado en 3 bloques @if)     -->
+            <!-- ============================================ -->
+            @if (field.type === FieldColumnTypeEnum.Autocomplete) {
+              <input matInput 
+                    [formControlName]="field.key"
+                    [matAutocomplete]="auto"
+                    (input)="onSearchInput(field.key, $event)"
+                    class="!text-slate-800 !font-medium">
+              
+              <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayWithOption">
+                @for (option of field.options || []; track option.value) {
+                  <mat-option [value]="option" [disabled]="option.isDisabled" class="!font-medium">
+                    <div class="flex items-center justify-between py-1 px-2 w-full">
+                      <div class="flex flex-col">
+                        <span class="font-medium text-sm">{{ option.label }}</span>
+                        @if (option.sublabel) {
+                          <span class="text-xs text-slate-500">{{ option.sublabel }}</span>
+                        }
+                      </div>
+                      
+                      @if (option.statusColor && option.statusText) {
+                        <div class="flex items-center gap-2 ml-4">
+                          <span class="text-xs font-semibold" 
+                                [ngClass]="{
+                                  'text-green-600': option.statusColor === 'green',
+                                  'text-amber-600': option.statusColor === 'yellow',
+                                  'text-red-600': option.statusColor === 'red',
+                                  'text-slate-500': option.statusColor === 'gray'
+                                }">
+                            {{ option.statusText }}
+                          </span>
+                          <div class="w-3 h-3 rounded-full" [class]="getStatusColorClass(option.statusColor)"></div>
+                        </div>
+                      }
+                    </div>
+                  </mat-option>
+                } @empty {
+                  <mat-option disabled>
+                    <span class="text-slate-400">No se encontraron resultados.</span>
+                  </mat-option>
+                }
+              </mat-autocomplete>
+            }
+
+            <!-- Suffix: Icono de búsqueda (bloque separado por ser proyectable) -->
+            @if (field.type === FieldColumnTypeEnum.Autocomplete) {
+              <mat-icon matSuffix class="!text-slate-400 !text-xl !w-5 !h-5">search</mat-icon>
+            }
+
+            <!-- SELECT DINÁMICO -->
+            @else if (field.type === FieldColumnTypeEnum.Select && field.isDynamic) {
               <mat-select [formControlName]="field.key" 
                           [compareWith]="compareOptions"
                           class="!font-medium">
-                @for (option of field.options; track option.value) {
+                @for (option of field.options || []; track option.value) {
                   <mat-option [value]="option" [disabled]="option.isDisabled" class="!font-medium">
                     <div class="flex items-center justify-between py-1 px-2 w-full">
                       <div class="flex flex-col">
@@ -72,10 +124,10 @@
               </mat-select>
             }
 
-            <!-- SELECT ESTÁTICO (Original) -->
+            <!-- SELECT ESTÁTICO -->
             @else if (field.type === FieldColumnTypeEnum.Select) {
               <mat-select [formControlName]="field.key" class="!font-medium">
-                @for (option of field.options; track option.value) {
+                @for (option of field.options || []; track option.value) {
                   <mat-option [value]="option.value" class="!font-medium">{{ option.label }}</mat-option>
                 }
               </mat-select>
@@ -84,7 +136,7 @@
             <!-- INPUT ESTÁNDAR -->
             @else {
               <input matInput 
-                     [type]="field.type!" 
+                     [type]="field.type || 'text'" 
                      [formControlName]="field.key"
                      [placeholder]="field.placeholder || ''"
                      class="!text-slate-800 !font-medium">

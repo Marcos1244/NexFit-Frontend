@@ -7,11 +7,7 @@ export const ClientRoutes: Routes = [
         pathMatch: 'full'
     },
     {
-        path: 'list/enable',
-        loadComponent: () => import('./components/client-list/client-list.component').then(m => m.ClientListComponent)
-    },
-    {
-        path: 'list/disable',
+        path: 'list/:status',
         loadComponent: () => import('./components/client-list/client-list.component').then(m => m.ClientListComponent)
     },
     {

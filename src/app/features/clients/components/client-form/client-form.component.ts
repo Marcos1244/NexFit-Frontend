@@ -9,12 +9,15 @@ import TableFormConfig from '../../../../ui/models/TableFormConfig.model';
 import { DialogThemeEnum } from '../../../../ui/enums/DialogTheme.enum';
 import MessageError from '../../../../core/dto/messageError.dto';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { DynamicFormComponent } from '../../../../ui/components/dynamic-form/dynamic-form.component';
 import { ModuleLayoutComponent } from '../../../../layouts/components/module-layout/module-layout.component';
 import { ScheduleApiService } from '../../../schedules/services/schedule-api.service';
 import { CoachApiService } from '../../../coaches/services/coach-api.service';
+import { SettingsService } from '../../../settings/services/settings.service';
 import Schedule from '../../../../core/models/schedule.model';
 import Coach from '../../../../core/models/coach.model';
+import Settings from '../../../../core/models/settings.model';
 import { EnrichedSelectOption } from '../../../../ui/models/EnrichedSelectOption.model';
 import PaginationResultDto from '../../../../core/dto/PaginationResult.dto';
 
@@ -30,18 +33,23 @@ export class ClientFormComponent implements OnInit {
   private clientApi: ClientApiService = inject(ClientApiService);
   private scheduleApi: ScheduleApiService = inject(ScheduleApiService);
   private coachApi: CoachApiService = inject(CoachApiService);
+  private settingsService: SettingsService = inject(SettingsService);
   private formBuilder: FormBuilder = inject(FormBuilder);
   private router: Router = inject(Router);
-  private cdr: ChangeDetectorRef = inject(ChangeDetectorRef);  // ← Nuevo
+  private cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
 
-  private readonly MAX_CLIENTS_PER_SCHEDULE = 35;
+  private maxClientsPerSchedule = 35;
+  private thresholdGreen = 70;
+  private thresholdYellow = 90;
+
   private clientId: number | null = null;
   private isInitialLoad = true;
 
   readonly menuElements: Array<MenuElementConfig> = [
     { label: 'Crear', route: '/application/clients/save' },
     { label: 'Listar Activos', route: '/application/clients/list/enable' },
-    { label: 'Listar Inactivos', route: '/application/clients/list/disable' }
+    { label: 'Listar Inactivos', route: '/application/clients/list/disable' },
+    { label: 'Listar Pendientes', route: '/application/clients/list/pending' }
   ];
 
   scheduleOptions = signal<Array<EnrichedSelectOption>>([]);
@@ -131,8 +139,31 @@ export class ClientFormComponent implements OnInit {
       ]));
     }
 
-    this.loadScheduleOptions();
-    this.setupFieldDependencies();
+    this.loadSettings().subscribe({
+      next: () => {
+        this.loadScheduleOptions();
+        this.setupFieldDependencies();
+      },
+      error: (err) => {
+        console.warn('No se pudieron cargar las configuraciones, usando valores por defecto:', err);
+        this.loadScheduleOptions();
+        this.setupFieldDependencies();
+      }
+    });
+  }
+
+  private loadSettings(): Observable<Array<Settings>> {
+    return this.settingsService.getSettings().pipe(
+      map(settings => {
+        const configMap = new Map(settings.map(s => [s.key, s.value]));
+
+        this.maxClientsPerSchedule = configMap.get('carga_total_maxima') ?? 35;
+        this.thresholdGreen = configMap.get('bandera_verde') ?? 70;
+        this.thresholdYellow = configMap.get('bandera_amarilla') ?? 90;
+
+        return settings;
+      })
+    );
   }
 
   private setupFieldDependencies(): void {
@@ -162,7 +193,7 @@ export class ClientFormComponent implements OnInit {
       .subscribe({
         next: (response: PaginationResultDto<Schedule>) => {
           const availableSchedules = response.content.filter(
-            schedule => schedule.activeClientCount < this.MAX_CLIENTS_PER_SCHEDULE
+            schedule => schedule.activeClientCount < this.maxClientsPerSchedule
           );
 
           const options: Array<EnrichedSelectOption> = availableSchedules.map(
@@ -197,7 +228,6 @@ export class ClientFormComponent implements OnInit {
           phone: res.phone
         });
 
-        // Establecer el horario
         if (res.schedule?.scheduleId) {
           const scheduleOption = this.findOptionById(this.scheduleOptions(), res.schedule.scheduleId);
           if (scheduleOption) {
@@ -207,7 +237,6 @@ export class ClientFormComponent implements OnInit {
 
         this.isInitialLoad = false;
 
-        // Establecer el entrenador con un setTimeout más largo
         if (res.schedule?.scheduleId && res.coach?.personId) {
           setTimeout(() => {
             const coachOption = this.findOptionById(this.coachOptions(), res.coach.personId);
@@ -215,11 +244,9 @@ export class ClientFormComponent implements OnInit {
               this.clientForm.get('coachId')?.setValue(coachOption);
             }
             
-            // ← CRÍTICO: Forzar detección de cambios
             this.cdr.detectChanges();
           }, 200);
         } else {
-          // ← Forzar detección de cambios incluso sin entrenador
           this.cdr.detectChanges();
         }
       },
@@ -247,20 +274,20 @@ export class ClientFormComponent implements OnInit {
   }
 
   private mapScheduleToOption(schedule: Schedule): EnrichedSelectOption {
-    const percentage = (schedule.activeClientCount / this.MAX_CLIENTS_PER_SCHEDULE) * 100;
+    const percentage = (schedule.activeClientCount / this.maxClientsPerSchedule) * 100;
     
     let statusColor: 'green' | 'yellow' | 'red';
     let statusText: string;
 
-    if (percentage >= 90) {
+    if (percentage >= this.thresholdYellow) {
       statusColor = 'red';
-      statusText = `Casi lleno (${schedule.activeClientCount}/${this.MAX_CLIENTS_PER_SCHEDULE})`;
-    } else if (percentage >= 70) {
+      statusText = `Casi lleno (${schedule.activeClientCount}/${this.maxClientsPerSchedule})`;
+    } else if (percentage >= this.thresholdGreen) {
       statusColor = 'yellow';
-      statusText = `Ocupado (${schedule.activeClientCount}/${this.MAX_CLIENTS_PER_SCHEDULE})`;
+      statusText = `Ocupado (${schedule.activeClientCount}/${this.maxClientsPerSchedule})`;
     } else {
       statusColor = 'green';
-      statusText = `Disponible (${schedule.activeClientCount}/${this.MAX_CLIENTS_PER_SCHEDULE})`;
+      statusText = `Disponible (${schedule.activeClientCount}/${this.maxClientsPerSchedule})`;
     }
 
     return {
@@ -364,7 +391,7 @@ export class ClientFormComponent implements OnInit {
           }
         });
       }
-    });
+      });
   }
 
   handleCancel(): void {

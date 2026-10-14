@@ -1,0 +1,153 @@
+<app-module-layout moduleName="Configuración" [menuElements]="menuElements">
+  <div class="max-w-3xl mx-auto">
+
+    <div class="bg-white/80 backdrop-blur-xl border border-slate-200/60 shadow-2xl shadow-slate-200/40 rounded-3xl overflow-hidden transition-all duration-300">
+
+
+      <header class="px-8 pt-8 pb-6 bg-gradient-to-r from-slate-50/80 via-white to-transparent border-b border-slate-100">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-interactivo/10 shadow-inner">
+            <mat-icon class="!text-interactivo !text-2xl">tune</mat-icon>
+          </div>
+          <div>
+            <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800">
+              Configuración del Sistema
+            </h2>
+            <p class="mt-1 text-sm text-slate-500 font-medium">
+              Ajuste los umbrales y parámetros que rigen el comportamiento del sistema.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div class="p-8 space-y-8">
+
+        @if (isLoading()) {
+          <div class="flex flex-col items-center justify-center py-16 gap-4">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p class="text-sm text-slate-500">Cargando configuraciones...</p>
+          </div>
+        } @else {
+
+          <form [formGroup]="settingsForm" class="space-y-8">
+
+            <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200/60">
+              <div class="flex items-center gap-2 mb-3">
+                <mat-icon class="!text-interactivo !text-xl">palette</mat-icon>
+                <span class="text-sm font-bold text-slate-700">Previsualización de ocupación</span>
+              </div>
+
+
+              <div class="flex h-4 rounded-full overflow-hidden mb-2">
+                <div class="bg-green-500 transition-all duration-300"
+                     [style.width.%]="preview().verde"></div>
+                <div class="bg-amber-500 transition-all duration-300"
+                     [style.width.%]="preview().amarilla - preview().verde"></div>
+                <div class="bg-red-500 transition-all duration-300"
+                     [style.width.%]="100 - preview().amarilla"></div>
+              </div>
+
+              <div class="flex justify-between text-xs text-slate-500 font-medium">
+                <span class="text-green-600">Disponible (0 - {{ preview().verde }}%)</span>
+                <span class="text-amber-600">Ocupado ({{ preview().verde }} - {{ preview().amarilla }}%)</span>
+                <span class="text-red-600">Casi lleno ({{ preview().amarilla }} - 100%)</span>
+              </div>
+
+              @if (thresholdOrderInvalid) {
+                <div class="mt-3 flex items-center gap-2 text-xs text-red-600 font-medium bg-red-50 border border-red-200 rounded-lg p-2">
+                  <mat-icon class="!text-red-500 !text-base !w-4 !h-4">error_outline</mat-icon>
+                  Los umbrales deben ser ascendentes: Verde &lt; Amarillo &lt; Rojo.
+                </div>
+              }
+            </div>
+
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              @for (key of orderedKeys; track key) {
+                @let meta = getMeta(key);
+
+                <div class="flex flex-col">
+                  <div class="flex items-center gap-2 mb-2">
+                    <mat-icon class="!text-interactivo !text-xl">{{ meta.icon }}</mat-icon>
+                    <span class="text-sm font-bold text-slate-700">{{ meta.label }}</span>
+                  </div>
+
+                  <mat-form-field appearance="outline"
+                                  class="w-full !rounded-xl transition-all duration-300
+                                         hover:!shadow-md hover:!shadow-slate-200/50
+                                         focus-within:!shadow-lg focus-within:!shadow-interactivo/15">
+                    <mat-label class="!font-medium !text-slate-600">Valor</mat-label>
+
+                    <input matInput
+                           type="number"
+                           [formControlName]="key"
+                           [min]="meta.min"
+                           [max]="meta.max"
+                           class="!text-slate-800 !font-medium">
+
+                    <span matSuffix class="text-xs text-slate-400 pr-1">{{ meta.suffix }}</span>
+
+                    <mat-hint align="start" class="!text-xs !text-slate-400 !font-normal pt-1">
+                      {{ meta.description }}
+                    </mat-hint>
+
+                    @if (settingsForm.get(key)?.invalid && settingsForm.get(key)?.touched) {
+                      <mat-error class="!text-xs !font-medium">
+                        @if (settingsForm.get(key)?.errors?.['required']) {
+                          Este campo es obligatorio.
+                        } @else if (settingsForm.get(key)?.errors?.['min']) {
+                          El valor mínimo es {{ meta.min }}.
+                        } @else if (settingsForm.get(key)?.errors?.['max']) {
+                          El valor máximo es {{ meta.max }}.
+                        }
+                      </mat-error>
+                    }
+                  </mat-form-field>
+                </div>
+              }
+            </div>
+
+
+            <div class="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-6 border-t border-slate-100">
+
+              <button mat-stroked-button
+                      type="button"
+                      (click)="handleReset()"
+                      [disabled]="isSaving() || !hasChanges()"
+                      class="!rounded-xl !px-6 !py-2 !border-slate-200 !text-slate-600 !font-semibold
+                             hover:!bg-slate-50 hover:!border-slate-300
+                             disabled:!opacity-50 disabled:cursor-not-allowed
+                             active:scale-95 transition-all duration-200">
+                Restaurar
+              </button>
+
+              <button mat-flat-button
+                      type="button"
+                      (click)="handleSave()"
+                      [disabled]="isSaving() || !hasChanges() || settingsForm.invalid"
+                      class="!rounded-xl !px-8 !py-2 !bg-interactivo !text-white !font-bold !text-base
+                             shadow-lg shadow-interactivo/30
+                             hover:shadow-xl hover:shadow-interactivo/40 hover:-translate-y-0.5
+                             active:translate-y-0 active:shadow-md
+                             disabled:!bg-slate-200 disabled:!text-slate-400 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed
+                             transition-all duration-200">
+                @if (isSaving()) {
+                  <div class="flex items-center gap-2">
+                    <mat-spinner diameter="18" class="!text-white"></mat-spinner>
+                    Guardando...
+                  </div>
+                } @else {
+                  <div class="flex items-center gap-2">
+                    <mat-icon class="!text-white !text-lg">save</mat-icon>
+                    Guardar Cambios
+                  </div>
+                }
+              </button>
+            </div>
+
+          </form>
+        }
+      </div>
+    </div>
+  </div>
+</app-module-layout>

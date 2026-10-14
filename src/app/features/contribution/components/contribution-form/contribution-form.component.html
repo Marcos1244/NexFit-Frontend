@@ -1,0 +1,14 @@
+<app-module-layout moduleName="Gestión de Contribuciones" [menuElements]="menuElements">
+  <div class="max-w-2xl mx-auto">
+    
+    <app-dynamic-form
+      title="Registrar Contribución"
+      [fields]="contributionFormFields"
+      [formGroup]="contributionForm"
+      (onSubmit)="handleSave()"
+      (onCancel)="handleCancel()"
+      (onAutocompleteSearch)="filterClients($event.term)">
+    </app-dynamic-form>
+
+  </div>
+</app-module-layout>

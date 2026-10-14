@@ -1,0 +1,16 @@
+<app-module-layout moduleName="Gestión de Contribuciones" [menuElements]="menuElements">
+
+  <app-dynamic-table
+    [columns]="tableColumns"
+    [data]="contributions()"
+    [totalElements]="totalElements()"
+    [pageSize]="pageSize()"
+    [pageIndex]="pageNumber()"
+    [actions]="actions"
+    (onPaginate)="handlePagination($event)"
+    (onFilter)="handleFilters($event)"
+    (onAction)="handleAction($event)"
+    [filters]="filters">
+  </app-dynamic-table>
+
+</app-module-layout>

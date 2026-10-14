@@ -5,5 +5,6 @@ export enum FieldColumnTypeEnum {
   Date = 'date',
   Time = 'time',
   Password = 'password',
-  Custom = 'custom'
+  Custom = 'custom',
+  Autocomplete = 'autocomplete'
 }

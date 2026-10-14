@@ -3,5 +3,6 @@ export enum EventActionEnum {
   Enable = 'enable',
   Update = 'update',
   View = 'view',
-  Schedules = 'schedules'
+  Schedules = 'schedules',
+  Pending = 'pending'
 }

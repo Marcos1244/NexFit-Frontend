@@ -28,12 +28,14 @@ export class ClientApiService {
         pageNumber: number,
         pageSize: number,
         status: boolean,
+        hasPendingContribution: boolean = false,
         filters: any = {}
     ): Observable<PaginationResultDto<Client>> {
         let params = new HttpParams()
             .set('pageNumber', pageNumber)
             .set('pageSize', pageSize)
-            .set('status', status);
+            .set('status', status)
+            .set('hasPendingContribution', hasPendingContribution);
 
         Object.keys(filters).forEach((key) => {
             const value = filters[key];
@@ -50,7 +52,7 @@ export class ClientApiService {
         return this.http.patch(`${this.API_ROUTE}/disable/${personId}`, {});
     }
 
-    enableClient (personId: number): Observable<any> {
-        return this.http.patch(`${this.API_ROUTE}/enable/${personId}`, {});
+    enableClient (personId: number, scheduleId: number): Observable<any> {
+        return this.http.patch(`${this.API_ROUTE}/enable/${personId}/${scheduleId}`, {});
     }
 }

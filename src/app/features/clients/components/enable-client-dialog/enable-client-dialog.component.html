@@ -1,0 +1,120 @@
+<style>
+  :host {
+      display: block;
+    }
+</style>
+<div class="w-[500px] max-w-full">
+      
+      <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+        <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-green-50">
+          <mat-icon class="!text-green-500 !text-xl">check_circle</mat-icon>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">Habilitar Cliente</h2>
+          <p class="text-sm text-slate-500">{{ data.clientName }}</p>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <p class="text-sm text-slate-600">
+          Este cliente fue inhabilitado y perdió su horario anterior. 
+          Para habilitarlo nuevamente, debe asignarle un horario disponible.
+        </p>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2">
+          <mat-icon class="!text-amber-500 !text-xl !w-5 !h-5 flex-shrink-0 mt-0.5">info</mat-icon>
+          <div class="text-xs text-amber-700">
+            <strong>Indicadores de disponibilidad:</strong>
+            <ul class="mt-1 space-y-0.5 ml-4 list-disc">
+              <li><span class="text-green-600 font-semibold">Verde:</span> Disponible (menos del {{thresholdGreen}}%)</li>
+              <li><span class="text-amber-600 font-semibold">Amarillo:</span> Ocupado ({{this.thresholdGreen}}% - 90%)</li>
+              <li><span class="text-red-600 font-semibold">Rojo:</span> Casi lleno (más del {{this.thresholdYellow}}%)</li>
+            </ul>
+          </div>
+        </div>
+
+        @if (isLoading()) {
+          <div class="flex items-center justify-center py-8 gap-3">
+            <mat-spinner diameter="32"></mat-spinner>
+            <span class="text-sm text-slate-500">Cargando horarios disponibles...</span>
+          </div>
+        } @else {
+          <form [formGroup]="form" class="space-y-2">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label class="!font-medium !text-slate-600">Horario</mat-label>
+              
+              <mat-select formControlName="scheduleId" 
+                          [compareWith]="compareOptions"
+                          class="!font-medium">
+                @for (option of scheduleOptions(); track option.value) {
+                  <mat-option [value]="option" class="!font-medium">
+                    <div class="flex items-center justify-between py-1 px-2 w-full">
+                      <div class="flex flex-col">
+                        <span class="font-medium text-sm">{{ option.label }}</span>
+                        @if (option.sublabel) {
+                          <span class="text-xs text-slate-500">{{ option.sublabel }}</span>
+                        }
+                      </div>
+                      
+                      @if (option.statusColor && option.statusText) {
+                        <div class="flex items-center gap-2 ml-4">
+                          <span class="text-xs font-semibold" 
+                                [ngClass]="{
+                                  'text-green-600': option.statusColor === 'green',
+                                  'text-amber-600': option.statusColor === 'yellow',
+                                  'text-red-600': option.statusColor === 'red'
+                                }">
+                            {{ option.statusText }}
+                          </span>
+                          <div class="w-3 h-3 rounded-full" [class]="getStatusColorClass(option.statusColor)"></div>
+                        </div>
+                      }
+                    </div>
+                  </mat-option>
+                } @empty {
+                  <mat-option disabled>
+                    <span class="text-slate-400">No hay horarios disponibles.</span>
+                  </mat-option>
+                }
+              </mat-select>
+              
+              <mat-icon matSuffix class="!text-slate-400 !text-xl !w-5 !h-5">schedule</mat-icon>
+              
+              @if (form.get('scheduleId')?.invalid && form.get('scheduleId')?.touched) {
+                <mat-error class="!text-xs !font-medium">
+                  Debe seleccionar un horario para habilitar al cliente.
+                </mat-error>
+              }
+            </mat-form-field>
+          </form>
+        }
+      </div>
+
+
+      <div class="flex justify-end gap-3 px-6 py-4 bg-slate-50 border-t border-slate-100">
+        <button mat-stroked-button
+                type="button"
+                (click)="onCancel()"
+                [disabled]="isLoading()"
+                class="!rounded-xl !px-5 !py-2 !border-slate-200 !text-slate-600 !font-semibold 
+                       hover:!bg-slate-100 transition-all duration-200">
+          Cancelar
+        </button>
+        <button mat-flat-button
+                type="button"
+                (click)="onConfirm()"
+                [disabled]="form.invalid || isLoading()"
+                class="!rounded-xl !px-5 !py-2 !bg-green-500 !text-white !font-bold
+                       shadow-lg shadow-green-500/30 
+                       hover:shadow-xl hover:-translate-y-0.5 
+                       active:translate-y-0
+                       disabled:!bg-slate-200 disabled:!text-slate-400 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed
+                       transition-all duration-200">
+          <div class="flex items-center gap-2">
+            <mat-icon class="!text-white !text-lg">check</mat-icon>
+            Habilitar Cliente
+          </div>
+        </button>
+      </div>
+
+    </div>

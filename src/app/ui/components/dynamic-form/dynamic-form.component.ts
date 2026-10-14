@@ -1,12 +1,14 @@
+// ui/components/dynamic-form/dynamic-form.component.ts
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import TableFormConfig from '../../models/TableFormConfig.model';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatFormField, MatFormFieldModule, MatSuffix } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { FieldColumnTypeEnum } from '../../enums/FieldColumnType.enum';
 
 @Component({
@@ -17,7 +19,8 @@ import { FieldColumnTypeEnum } from '../../enums/FieldColumnType.enum';
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    MatAutocompleteModule
   ],
   selector: 'app-dynamic-form',
   styleUrl: './dynamic-form.component.css',
@@ -30,6 +33,7 @@ export class DynamicFormComponent {
 
   onSubmit = output<void>();
   onCancel = output<void>();
+  onAutocompleteSearch = output<{ fieldKey: string; term: string }>();
 
   getControl(key: string) {
     return this.formGroup().get(key);
@@ -50,6 +54,7 @@ export class DynamicFormComponent {
     if (errors['minlength']) return field.errorMessages?.['minlength'] || `Mínimo ${errors['minlength'].requiredLength} caracteres`;
     if (errors['maxlength']) return field.errorMessages?.['maxlength'] || `Máximo ${errors['maxlength'].requiredLength} caracteres`;
     if (errors['pattern']) return field.errorMessages?.['pattern'] || 'Formato inválido';
+    if (errors['min']) return field.errorMessages?.['min'] || `El valor mínimo es ${errors['min'].min}`;
 
     return 'El valor ingresado no es válido';
   }
@@ -68,7 +73,22 @@ export class DynamicFormComponent {
     return null;
   }
 
+  /**
+   * Función de comparación para selects con objetos enriquecidos.
+   */
+  compareOptions(o1: any, o2: any): boolean {
+    if (o1 === o2) return true;
+    if (!o1 || !o2) return false;
+    
+    const id1 = typeof o1 === 'object' ? o1.value : o1;
+    const id2 = typeof o2 === 'object' ? o2.value : o2;
+    
+    return id1 === id2;
+  }
 
+  /**
+   * Obtiene el color de estado como clase de Tailwind.
+   */
   getStatusColorClass(color?: string): string {
     switch (color) {
       case 'green': return 'bg-green-500';
@@ -79,19 +99,21 @@ export class DynamicFormComponent {
     }
   }
 
-
-  formatOptionLabel(option: any): string {
+  /**
+   * Función de display para autocomplete.
+   */
+  displayWithOption(option: any): string {
     if (!option) return '';
-    return option.label || String(option);
+    if (typeof option === 'string') return option;
+    return option.label || '';
   }
 
-  compareOptions(o1: any, o2: any): boolean {
-    if (!o1 || !o2) return o1 === o2;
-    
-    const id1 = typeof o1 === 'object' ? o1.value : o1;
-    const id2 = typeof o2 === 'object' ? o2.value : o2;
-    
-    return id1 === id2;
+  /**
+   * Maneja el evento de búsqueda en autocomplete.
+   */
+  onSearchInput(fieldKey: string, event: Event): void {
+    const term = (event.target as HTMLInputElement).value;
+    this.onAutocompleteSearch.emit({ fieldKey, term });
   }
 
   protected readonly FieldColumnTypeEnum = FieldColumnTypeEnum;
